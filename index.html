@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Script — v2</title>
+<style>
+  :root{
+    --bg:#f4efe2; --ink:#2b2117; --muted:#8a7b63;
+    --townsfolk:#1d6fb8; --outsider:#1d6fb8; --minion:#9e2b25; --demon:#9e2b25;
+    --fabled:#7a4fb0; --rule:#c9bda3; --card:#fbf8f0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Georgia','Times New Roman',serif;padding:1.5rem 1rem 4rem;}
+  .sheet{max-width:1100px;margin:0 auto;background:var(--card);
+    box-shadow:0 4px 24px rgba(0,0,0,0.15);border-radius:6px;padding:1.5rem 2rem 2.5rem;}
+  .sheet-head{display:flex;align-items:baseline;gap:1rem;border-bottom:3px double var(--rule);padding-bottom:0.6rem;margin-bottom:0.5rem;}
+  .sheet-head h1{font-size:2rem;margin:0;font-style:italic;}
+  .sheet-head .by{color:var(--muted);font-style:italic;}
+  .toolbar{display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.8rem 0 1.5rem;align-items:center;position:sticky;top:0;background:var(--card);padding:0.6rem 0;z-index:20;}
+  .toolbar button{font-family:sans-serif;font-size:0.78rem;padding:0.4rem 0.8rem;border-radius:5px;border:1px solid var(--muted);background:#fff;color:var(--ink);cursor:pointer;}
+  .toolbar button:hover{background:var(--ink);color:#fff;}
+  .toolbar .save-btn{font-size:0.9rem;font-weight:700;padding:0.5rem 1.3rem;background:#2f7d34;color:#fff;border-color:#2f7d34;}
+  .toolbar .save-btn:hover{background:#256128;color:#fff;}
+  .toolbar .save-btn.dirty{background:#c0413a;border-color:#c0413a;animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+  .toolbar .saved-note{color:var(--muted);font-size:0.78rem;font-style:italic;}
+
+  /* inline-editable fields */
+  [contenteditable]{outline:none;border-radius:4px;padding:1px 3px;transition:background 0.15s;}
+  [contenteditable]:hover{background:#efe7d3;}
+  [contenteditable]:focus{background:#fff;box-shadow:0 0 0 2px var(--rule);}
+
+  .team-head{display:flex;align-items:center;gap:0.6rem;margin:1.6rem 0 0.8rem;}
+  .team-head h2{font-size:0.95rem;letter-spacing:3px;text-transform:uppercase;margin:0;font-family:sans-serif;font-weight:700;}
+  .team-head .line{flex:1;height:1px;background:var(--rule);}
+  .team-head .cnt{font-size:0.75rem;color:var(--muted);font-family:sans-serif;}
+  .townsfolk-h h2,.outsider-h h2{color:var(--townsfolk);}
+  .minion-h h2,.demon-h h2{color:var(--minion);}
+  .fabled-h h2{color:var(--fabled);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem;}
+  .col{display:flex;flex-direction:column;gap:0.4rem;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+
+  .char{display:flex;gap:0.7rem;padding:0.5rem 0.4rem;border-radius:6px;position:relative;}
+  .char:hover{background:#f1ead9;}
+  .icon{flex:0 0 36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-family:sans-serif;font-size:0.95rem;color:#fff;margin-top:2px;}
+  .t-townsfolk .icon,.t-outsider .icon{background:radial-gradient(circle at 35% 30%, #3b8fd6, #134a7e);}
+  .t-minion .icon,.t-demon .icon{background:radial-gradient(circle at 35% 30%, #c0413a, #6e1a16);}
+  .t-fabled .icon{background:radial-gradient(circle at 35% 30%, #9d72d4, #5a3a86);}
+  .c-body{flex:1;}
+  .c-name{font-weight:700;font-size:1.05rem;}
+  .t-townsfolk .c-name,.t-outsider .c-name{color:var(--townsfolk);}
+  .t-minion .c-name,.t-demon .c-name{color:var(--minion);}
+  .t-fabled .c-name{color:var(--fabled);}
+  .c-nameline{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+  .c-cat{font-family:sans-serif;font-size:0.6rem;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);border:1px solid var(--rule);border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:middle;min-width:14px;}
+  .c-cat:empty::before{content:"+tag";opacity:0.4;}
+  .c-ability{font-size:0.92rem;line-height:1.35;margin-top:1px;}
+  .c-ability:empty::before{content:"ability…";opacity:0.4;}
+  .c-ability .jinx{font-weight:700;color:var(--minion);}
+  .c-actions{position:absolute;top:4px;right:4px;display:none;gap:4px;align-items:center;}
+  .char:hover .c-actions{display:flex;}
+  .c-actions .c-gender{font-size:0.7rem;padding:1px 2px;border-radius:3px;border:1px solid var(--muted);background:#fff;cursor:pointer;}
+  .c-actions button{font-family:sans-serif;font-size:0.62rem;padding:1px 6px;border-radius:3px;border:1px solid var(--muted);background:#fff;cursor:pointer;color:var(--ink);}
+  .c-actions .del:hover{border-color:var(--demon);color:var(--demon);}
+  .edit-fields input,.edit-fields textarea{width:100%;font-family:inherit;font-size:0.9rem;border:1px solid var(--rule);border-radius:4px;padding:5px 7px;margin-bottom:5px;background:#fff;color:var(--ink);}
+  .edit-fields textarea{min-height:66px;resize:vertical;}
+  .add-row{margin-top:0.4rem;}
+  .add-row button{font-family:sans-serif;font-size:0.7rem;padding:3px 10px;border-radius:4px;border:1px dashed var(--muted);background:transparent;color:var(--muted);cursor:pointer;}
+  footer{max-width:1100px;margin:1.5rem auto 0;text-align:center;color:var(--muted);font-size:0.8rem;}
+  footer a{color:var(--townsfolk);}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="sheet-head">
+    <h1 id="title">Custom Script</h1>
+    <span class="by">v2 — by Ross</span>
+  </div>
+  <div class="toolbar">
+    <button class="save-btn" onclick="saveAll()">💾 Save Changes</button>
+    <button onclick="exportScriptTool()">🎲 Export for Script Tool</button>
+    <button onclick="exportData()">⬇ Backup JSON</button>
+    <button onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+    <span class="saved-note" id="savedNote"></span>
+  </div>
+  <div id="app"></div>
+</div>
+<footer>Edits save to <code>data.json</code> on disk. Final build → <a href="https://script.bloodontheclocktower.com/" target="_blank">official Script Tool</a>.</footer>
+
+<script>
+const STORAGE_KEY = "customScriptV1";
+let data = {};
+const TEAMS = [
+  {key:"townsfolk", label:"Townsfolk", hcls:"townsfolk-h", tcls:"t-townsfolk"},
+  {key:"outsider",  label:"Outsiders", hcls:"outsider-h",  tcls:"t-outsider"},
+  {key:"minion",    label:"Minions",   hcls:"minion-h",    tcls:"t-minion"},
+  {key:"demon",     label:"Demons",    hcls:"demon-h",     tcls:"t-demon"},
+  {key:"fabled",    label:"Fabled",    hcls:"fabled-h",    tcls:"t-fabled"}
+];
+
+async function init(){
+  try{
+    const res = await fetch('data.json',{cache:'no-store'});
+    if(res.ok){ data = await res.json(); }
+    else throw 0;
+  }catch(e){
+    const s = localStorage.getItem(STORAGE_KEY);
+    data = s ? JSON.parse(s) : {};
+  }
+  render();
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const note=document.getElementById('savedNote');
+  fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(()=>{note.textContent="✓ saved to disk";})
+    .catch(()=>{note.textContent="✓ saved (browser only — run server.py)";});
+  setTimeout(()=>note.textContent="",2000);
+}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+// bold the [jinx] brackets
+function fmtAbility(a){
+  return esc(a).replace(/\[([^\]]+)\]/g, '<span class="jinx">[$1]</span>');
+}
+
+function render(){
+  const app=document.getElementById('app');
+  app.innerHTML="";
+  for(const t of TEAMS){
+    const list = (data[t.key] && data[t.key].ours) ? data[t.key].ours : [];
+    const head=document.createElement('div');
+    head.className="team-head "+t.hcls;
+    head.innerHTML=`<h2>${t.label}</h2><div class="line"></div><span class="cnt">${list.length}</span>`;
+    app.appendChild(head);
+
+    const grid=document.createElement('div');
+    grid.className="grid";
+    const leftCol=document.createElement('div'); leftCol.className="col";
+    const rightCol=document.createElement('div'); rightCol.className="col";
+    // Balanced column-major fill: first half down the left, rest down the right.
+    // List is ordered men-first, so men fill the left; overflow men spill to top-right.
+    const half=Math.ceil(list.length/2);
+    list.forEach((c,i)=>{
+      const card=charCard(t,c,i);
+      (i<half ? leftCol : rightCol).appendChild(card);
+    });
+    grid.appendChild(leftCol); grid.appendChild(rightCol);
+    app.appendChild(grid);
+
+    const addRow=document.createElement('div');
+    addRow.className="add-row";
+    addRow.innerHTML=`<button onclick="addChar('${t.key}')">+ Add ${t.label.replace(/s$/,'')}</button>`;
+    app.appendChild(addRow);
+  }
+}
+
+function charCard(t,c,i){
+  const div=document.createElement('div');
+  div.className="char "+t.tcls;
+  div.id=`card-${t.key}-${i}`;
+  const initial=(c.name||"?").trim().charAt(0).toUpperCase();
+  div.innerHTML=`
+    <div class="icon">${initial}</div>
+    <div class="c-body">
+      <div class="c-nameline">
+        <span class="c-name" contenteditable data-field="name" oninput="markDirty()">${esc(c.name)}</span>
+        <span class="c-cat" contenteditable data-field="cat" oninput="markDirty()" placeholder="tag">${esc(c.cat||'')}</span>
+      </div>
+      <div class="c-ability" contenteditable data-field="ability" oninput="markDirty()">${esc(c.ability)}</div>
+    </div>
+    <div class="c-actions">
+      <select class="c-gender" onchange="markDirty()" title="Male = left column, Female = right column">
+        <option value="m"${c.g!=='f'?' selected':''}>♂</option>
+        <option value="f"${c.g==='f'?' selected':''}>♀</option>
+      </select>
+      <button class="del" onclick="delChar('${t.key}',${i})" title="Delete">×</button>
+    </div>`;
+  return div;
+}
+
+// Track unsaved changes
+let dirty=false;
+function markDirty(){
+  dirty=true;
+  const b=document.querySelector('.save-btn');
+  if(b){ b.classList.add('dirty'); b.textContent="💾 Save Changes *"; }
+}
+function clearDirty(){
+  dirty=false;
+  const b=document.querySelector('.save-btn');
+  if(b){ b.classList.remove('dirty'); b.textContent="💾 Save Changes"; }
+}
+
+// Read every card's editable fields back into the data model (no sort/persist)
+function readDOMIntoData(){
+  for(const t of TEAMS){
+    if(!data[t.key]) continue;
+    data[t.key].ours.forEach((c,i)=>{
+      const card=document.getElementById(`card-${t.key}-${i}`);
+      if(!card) return;
+      c.name=card.querySelector('.c-name').innerText.trim();
+      c.ability=card.querySelector('.c-ability').innerText.trim();
+      const cat=card.querySelector('.c-cat').innerText.trim();
+      if(cat) c.cat=cat; else delete c.cat;
+      c.g=card.querySelector('.c-gender').value;
+    });
+  }
+}
+
+// Big Save button: read all cards, keep men-first order, persist + re-render
+function saveAll(){
+  readDOMIntoData();
+  for(const t of TEAMS){
+    if(data[t.key]) data[t.key].ours.sort((a,b)=>(a.g==='f'?1:0)-(b.g==='f'?1:0));
+  }
+  save(); clearDirty(); render();
+}
+
+function addChar(key){
+  readDOMIntoData(); // preserve any in-progress edits
+  if(!data[key]) data[key]={ours:[],ref:[]};
+  data[key].ours.push({id:"new-"+Date.now(),name:"New Character",ability:"",g:"m"});
+  save(); clearDirty(); render();
+}
+function delChar(key,i){
+  if(!confirm("Delete "+data[key].ours[i].name+"?"))return;
+  readDOMIntoData(); // preserve any in-progress edits on other cards
+  data[key].ours.splice(i,1); save(); clearDirty(); render();
+}
+
+// Warn before leaving with unsaved edits
+window.addEventListener('beforeunload', e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+
+function slugify(n){return n.toLowerCase().replace(/[()]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"char_"+Math.random().toString(36).slice(2,7);}
+function exportScriptTool(){
+  const name=prompt("Script name?","Friends & Foes")||"Custom Script";
+  const author=prompt("Author?","Ross")||"";
+  const out=[{id:"_meta",name:name,author:author}];
+  const used=new Set();
+  for(const t of TEAMS){
+    for(const c of (data[t.key].ours||[])){
+      if(c.tbd) continue;
+      let id=slugify(c.name); while(used.has(id))id+="_x"; used.add(id);
+      out.push({id,name:c.name,team:t.key,ability:(c.ability||"").trim(),image:"",
+        firstNight:0,firstNightReminder:"",otherNight:0,otherNightReminder:"",reminders:[],setup:false});
+    }
+  }
+  dl(JSON.stringify(out,null,2),"script-tool-import.json");
+}
+function exportData(){ dl(JSON.stringify(data,null,2),"custom-script.json"); }
+function dl(text,fname){
+  const b=new Blob([text],{type:"application/json"});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fname; a.click();
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{ try{ data=JSON.parse(e.target.result); save(); render(); }catch(_){ alert("Invalid JSON."); } };
+  r.readAsText(f);
+}
+
+init();
+</script>
+</body>
+</html>
