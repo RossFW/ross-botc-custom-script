@@ -8,7 +8,7 @@
   :root{
     --bg:#f4efe2; --ink:#2b2117; --muted:#8a7b63;
     --townsfolk:#1d6fb8; --outsider:#1d6fb8; --minion:#9e2b25; --demon:#9e2b25;
-    --fabled:#7a4fb0; --rule:#c9bda3; --card:#fbf8f0;
+    --fabled:#7a4fb0; --traveller:#a8742a; --rule:#c9bda3; --card:#fbf8f0;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -39,6 +39,7 @@
   .townsfolk-h h2,.outsider-h h2{color:var(--townsfolk);}
   .minion-h h2,.demon-h h2{color:var(--minion);}
   .fabled-h h2{color:var(--fabled);}
+  .traveller-h h2{color:var(--traveller);}
 
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem;}
   .col{display:flex;flex-direction:column;gap:0.4rem;}
@@ -51,11 +52,13 @@
   .t-townsfolk .icon,.t-outsider .icon{background:radial-gradient(circle at 35% 30%, #3b8fd6, #134a7e);}
   .t-minion .icon,.t-demon .icon{background:radial-gradient(circle at 35% 30%, #c0413a, #6e1a16);}
   .t-fabled .icon{background:radial-gradient(circle at 35% 30%, #9d72d4, #5a3a86);}
+  .t-traveller .icon{background:radial-gradient(circle at 35% 30%, #d3a24f, #7a4e15);}
   .c-body{flex:1;}
   .c-name{font-weight:700;font-size:1.05rem;}
   .t-townsfolk .c-name,.t-outsider .c-name{color:var(--townsfolk);}
   .t-minion .c-name,.t-demon .c-name{color:var(--minion);}
   .t-fabled .c-name{color:var(--fabled);}
+  .t-traveller .c-name{color:var(--traveller);}
   .c-nameline{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
   .c-cat{font-family:sans-serif;font-size:0.6rem;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);border:1px solid var(--rule);border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:middle;min-width:14px;}
   .c-cat:empty::before{content:"+tag";opacity:0.4;}
@@ -101,7 +104,8 @@ const TEAMS = [
   {key:"outsider",  label:"Outsiders", hcls:"outsider-h",  tcls:"t-outsider"},
   {key:"minion",    label:"Minions",   hcls:"minion-h",    tcls:"t-minion"},
   {key:"demon",     label:"Demons",    hcls:"demon-h",     tcls:"t-demon"},
-  {key:"fabled",    label:"Fabled",    hcls:"fabled-h",    tcls:"t-fabled"}
+  {key:"fabled",    label:"Fabled",    hcls:"fabled-h",    tcls:"t-fabled"},
+  {key:"traveller", label:"Travellers",hcls:"traveller-h", tcls:"t-traveller"}
 ];
 
 async function init(){
