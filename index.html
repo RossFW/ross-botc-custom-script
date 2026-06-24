@@ -251,7 +251,7 @@ function exportScriptTool(){
     for(const c of (data[t.key].ours||[])){
       if(c.tbd) continue;
       let id=slugify(c.name); while(used.has(id))id+="_x"; used.add(id);
-      out.push({id,name:c.name,team:t.key,ability:(c.ability||"").trim(),image:"",
+      out.push({id,name:c.name,team:t.key,ability:(c.ability||"").trim(),image:(c.img||""),
         firstNight:0,firstNightReminder:"",otherNight:0,otherNightReminder:"",reminders:[],setup:false});
     }
   }
